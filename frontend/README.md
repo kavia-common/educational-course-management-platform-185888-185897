@@ -1,82 +1,187 @@
-# Lightweight React Template for KAVIA
+# Frontend – Educational Course Management Platform
 
-This project provides a minimal React template with a clean, modern UI and minimal dependencies.
+This React application provides the user interface for students, instructors, and administrators to interact with the learning management system. It follows a modern “Ocean Professional” theme with blue primary and amber secondary accents, subtle shadows, and rounded corners.
 
-## Features
+## Project Overview and Ocean Professional Theme Summary
 
-- **Lightweight**: No heavy UI frameworks - uses only vanilla CSS and React
-- **Modern UI**: Clean, responsive design with KAVIA brand styling
-- **Fast**: Minimal dependencies for quick loading times
-- **Simple**: Easy to understand and modify
+The frontend is a lightweight React app that uses vanilla CSS and a minimal component set to deliver a responsive, accessible UI.
+
+- Application theme: Ocean Professional
+- Primary color: #2563EB (blue)
+- Secondary color: #F59E0B (amber)
+- Error color: #EF4444 (red)
+- Background: #f9fafb
+- Surface: #ffffff
+- Text: #111827
+- Dark mode: toggle via ThemeProvider, driven by [data-theme="dark"] CSS variables
+
+Theme tokens are implemented as CSS variables in src/components/layout/Layout.css and src/index.css. The ThemeProvider persists the selected theme in localStorage and applies a data-theme attribute on the html element.
 
 ## Getting Started
 
-In the project directory, you can run:
+Prerequisites:
+- Node.js 16+ and npm
 
-### `npm start`
+Install dependencies:
+- npm install
 
-Runs the app in development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+Development server (port 3000):
+- npm start
+- Open http://localhost:3000
 
-### `npm test`
+Run tests:
+- npm test
 
-Launches the test runner in interactive watch mode.
+Production build:
+- npm run build
+- Outputs to build/
 
-### `npm run build`
+## Environment Variables and Usage
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Environment variables are read at build time (Create React App convention, prefixed with REACT_APP_). The app centralizes environment access in src/utils/env.js and the API client in src/services/apiClient.js.
 
-## Customization
+Supported variables:
+- REACT_APP_API_BASE: Preferred API base URL. Example: https://api.example.com or /api
+- REACT_APP_BACKEND_URL: Fallback API base if REACT_APP_API_BASE is not set
+- REACT_APP_FRONTEND_URL: Public origin of the frontend (optional)
+- REACT_APP_WS_URL: WebSocket base URL (optional)
+- REACT_APP_NODE_ENV: Node environment override (defaults to process.env.NODE_ENV)
+- REACT_APP_ENABLE_SOURCE_MAPS: Not consumed in code; use CRA build flags if needed
+- REACT_APP_PORT: Not consumed by CRA directly; use tooling/docker to map ports
+- REACT_APP_TRUST_PROXY: Not used in frontend (server-side concern)
+- REACT_APP_LOG_LEVEL: debug | info | warn | error (defaults to debug in dev, warn in prod)
+- REACT_APP_HEALTHCHECK_PATH: Optional API path for health check pings (e.g., /healthz)
+- REACT_APP_FEATURE_FLAGS: JSON object string of feature flags (e.g., {"betaBanner":true})
+- REACT_APP_EXPERIMENTS_ENABLED: true | false
 
-### Colors
+How they are used in code:
+- getEnv (src/utils/env.js)
+  - Chooses apiBase from REACT_APP_API_BASE or REACT_APP_BACKEND_URL, defaulting to /api
+  - Parses REACT_APP_FEATURE_FLAGS JSON, sets experimentsEnabled
+  - Exposes nodeEnv, logLevel, wsUrl, frontendUrl, healthcheckPath
+- logger (src/utils/logger.js)
+  - Gates console output by REACT_APP_LOG_LEVEL
+- apiClient (src/services/apiClient.js)
+  - Builds URLs using apiBase and attaches Authorization headers when token is provided
+  - Supports healthcheck via getEnv().healthcheckPath
 
-The main brand colors are defined as CSS variables in `src/App.css`:
+Example .env.local:
+REACT_APP_API_BASE=https://lms-api.local
+REACT_APP_LOG_LEVEL=debug
+REACT_APP_HEALTHCHECK_PATH=/healthz
+REACT_APP_FEATURE_FLAGS={"newNavbar":true}
+REACT_APP_EXPERIMENTS_ENABLED=true
 
-```css
-:root {
-  --kavia-orange: #E87A41;
-  --kavia-dark: #1A1A1A;
-  --text-color: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.7);
-  --border-color: rgba(255, 255, 255, 0.1);
-}
-```
+## Routing Map
 
-### Components
+Routes are defined via createBrowserRouter in src/router/index.js and composed with the app Layout.
 
-This template uses pure HTML/CSS components instead of a UI framework. You can find component styles in `src/App.css`. 
+- / → Dashboard
+- /dashboard → Dashboard
+- /courses → Course list
+- /courses/:courseId → Course detail
+- /enroll → Enrollment
+- /admin/users → Admin: users (protected via ProtectedRoute with roles=["admin"])
+- /admin/courses → Admin: courses (protected)
+- /login → Login
+- /logout → Logout (performs logout then redirects)
+- * → 404 Not Found
 
-Common components include:
-- Buttons (`.btn`, `.btn-large`)
-- Container (`.container`)
-- Navigation (`.navbar`)
-- Typography (`.title`, `.subtitle`, `.description`)
+## Architecture
 
-## Learn More
+### Routing and Layout
+- Router: src/router/index.js uses createBrowserRouter and RouterProvider
+- Layout shell: src/components/layout/Layout.js composes Sidebar, Topbar, and content area
+- Protected routes: src/components/common/ProtectedRoute.js enforces authentication and role-based access
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### UI Components
+- src/components/ui: Button, Card, Input, Select, Table, Modal, LoadingSpinner, Badge, EmptyState
+- Styling tokens and base styles in src/components/layout/Layout.css and src/index.css
 
-### Code Splitting
+### State
+- src/state/authSlice.js
+  - Context-based auth store: isAuthenticated, token, user, role, flags, experiments
+  - Actions: login, logout; persisted in localStorage
+  - Flags and experiments are hydrated from getEnv()
+- src/state/courseSlice.js
+  - Context-based store: courses, selectedCourse, filters, pagination, enrollment
+  - Actions: setCourses, setSelected, setFilters, setPage, setEnrollment
+- src/state/store.js
+  - AppProviders combines AuthProvider and CourseProvider
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Services
+- src/services/apiClient.js
+  - apiFetch(path, options): JSON fetch with base URL and auth header support
+  - healthcheck(): optional health endpoint probe
+- src/services/courseService.js
+  - list, getById, enroll, unenroll
+- src/services/userService.js
+  - login, me, list, updateRole
+- src/services/enrollmentService.js
+  - myEnrollments, available, enroll, drop
+- src/services/adminService.js
+  - listCourses, createCourse, updateCourse, deleteCourse
 
-### Analyzing the Bundle Size
+### Utils and Hooks
+- src/utils/env.js: central environment resolution
+- src/utils/logger.js: log level–aware logger
+- src/hooks/useDebounce.js: input debouncing
+- src/hooks/usePagination.js: simple pagination helpers
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## Configuring API Base and Auth Headers
 
-### Making a Progressive Web App
+To point the frontend at a backend:
+1) Prefer REACT_APP_API_BASE
+- Example: REACT_APP_API_BASE=https://api.my-backend.com
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+2) Fallback REACT_APP_BACKEND_URL
+- If REACT_APP_API_BASE is unset, the app uses REACT_APP_BACKEND_URL instead.
 
-### Advanced Configuration
+3) Default
+- If neither are set, the app uses /api, which is suitable when reverse proxying from the same origin.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+Behavior in code:
+- apiClient resolves the base URL from getEnv().apiBase and strips trailing slashes.
+- apiFetch attaches Authorization: Bearer <token> automatically when a token is passed by services.
+- Auth tokens are stored in authSlice state after login. Services fetch methods accept an options object { token } which should be derived from useAuth().state.token.
 
-### Deployment
+Example usage:
+import { apiFetch } from "./services/apiClient";
+const data = await apiFetch("/courses", { token: auth.state.token });
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+CORS and same-origin notes:
+- When using an absolute REACT_APP_API_BASE pointing to another origin, ensure the backend allows CORS from your frontend origin.
+- When proxying via /api under the same origin, configure your web server or dev proxy accordingly.
 
-### `npm run build` fails to minify
+## Theming and Customization
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Theme tokens (CSS variables):
+- Defined in src/components/layout/Layout.css and mirrored for dark mode via [data-theme="dark"] overrides.
+- Key tokens: --color-primary, --color-secondary, --color-error, --color-bg, --color-surface, --color-text, --radius, --shadow-*
+
+Dark mode:
+- The ThemeProvider (src/components/common/ThemeProvider.js) stores the theme in localStorage and applies data-theme on document.documentElement.
+- The Topbar includes a toggle button to switch between light and dark modes.
+
+Customizing the look:
+- Update variables in Layout.css for global changes.
+- Component structure is minimal and CSS-only, making it straightforward to restyle buttons, inputs, tables, and cards.
+
+## Development Notes and Future Work
+
+- This app intentionally avoids heavy UI frameworks to keep the bundle small and the design system transparent.
+- Add form validation and error surfaces for service calls where needed.
+- Expand ProtectedRoute to support more granular permissions if the backend exposes them.
+- Consider adding react-query or SWR if data fetching patterns become more complex.
+- Introduce integration tests that mock API endpoints to validate flows end-to-end.
+
+Sources:
+- src/utils/env.js
+- src/services/apiClient.js
+- src/router/index.js
+- src/state/authSlice.js
+- src/state/courseSlice.js
+- src/state/store.js
+- src/components/common/ThemeProvider.js
+- src/components/layout/Layout.css
+- package.json
