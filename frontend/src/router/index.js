@@ -15,8 +15,13 @@ import { ProtectedRoute } from "../components/common/ProtectedRoute";
 /**
  * PUBLIC_INTERFACE
  */
+// PUBLIC_INTERFACE
 export function AppRouter() {
-  /** Register routes for React Router v6 and render via RouterProvider. */
+  /**
+   * Register routes for React Router v6 and render via RouterProvider.
+   * This component owns the single RouterProvider for the entire app.
+   * Ensure no other Router/BrowserRouter wraps this in the tree to avoid nested Router errors.
+   */
   const router = createBrowserRouter([
     {
       path: "/",
