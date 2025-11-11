@@ -13,8 +13,8 @@ import NotFound from "../pages/NotFound";
 import { ProtectedRoute } from "../components/common/ProtectedRoute";
 
 /**
-/ PUBLIC_INTERFACE
-*/
+ * PUBLIC_INTERFACE
+ */
 export function AppRouter() {
   /** Register routes for React Router v6 and render via RouterProvider. */
   const router = createBrowserRouter([

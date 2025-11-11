@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Logo">
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#2563EB" stop-opacity="0.9"/>
-      <stop offset="100%" stop-color="#F59E0B" stop-opacity="0.9"/>
-    </linearGradient>
-  </defs>
-  <rect x="4" y="4" width="56" height="56" rx="12" fill="url(#g)"/>
-  <path d="M20 42 L32 18 L44 42 Z" fill="#fff" opacity="0.95"/>
+<!-- Simple Ocean Professional placeholder logo -->
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="EduManage logo">
+  <rect x="2" y="2" width="60" height="60" rx="12" fill="#2563EB" />
+  <path d="M16 28L32 20L48 28L32 36L16 28Z" fill="#F59E0B"/>
+  <path d="M22 32V42C22 45.3137 24.6863 48 28 48H36C39.3137 48 42 45.3137 42 42V32" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
